@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Comparing Numbers — Drag the Sign · Created by Mr. McLean Math</title>
+<style>
+  :root{
+    --bg:#0b1226; --card:#101828; --text:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --accent:#38bdf8; --ok:#22c55e; --bad:#ef4444; --btn:#0f172a; --focus:#7dd3fc;
+    --tile:#142548; --tileHover:#1d305c; --slot:#0f1a30; --slotActive:#14304f;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+    background:linear-gradient(180deg,#0b1226 0%, #0e1533 70%); color:var(--text);
+  }
+  .wrap{max-width:1150px; margin:0 auto; padding:16px}
+  header{display:flex; flex-wrap:wrap; gap:10px 12px; align-items:center; justify-content:space-between; padding:10px 0 8px}
+  header h1{font-size:18px; margin:0; font-weight:600; color:#f3f4f6}
+  .controls{display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center}
+  .control{display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.04); border:1px solid var(--line); padding:6px 8px; border-radius:10px}
+  select, button, input[type="checkbox"]{font:inherit}
+  select, .btn{ background:#0f172a; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:8px 10px; cursor:pointer; }
+  select:focus, .btn:focus, .chip:focus, .slot:focus, .wcard button:focus{outline:3px solid var(--focus); outline-offset:2px}
+  .btn.primary{background:#0c1b3a}
+  .btn.secondary{background:#0c243a}
+  .btn.ghost{background:transparent; border-color:#334155}
+
+  .row{display:grid; gap:14px}
+  @media (min-width:1000px){ .row{grid-template-columns: 3fr 2fr} }
+  .card{
+    background:linear-gradient(180deg,#0f172a, #0b1226); border:1px solid var(--line);
+    border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  .help{margin:0 0 10px; color:#9ca3af}
+
+  /* GAME */
+  .bigRow{display:grid; grid-template-columns: 1fr auto 1fr; gap:12px; align-items:center; margin-top:6px}
+  .numBox{
+    font-family: ui-monospace, Menlo, Consolas, "Courier New", monospace;
+    font-size: clamp(30px, 5vw, 52px);
+    text-align:center; padding:10px 8px; border:1px solid #2a3a73; border-radius:14px;
+    background:#0f1a30; min-height:72px; display:flex; align-items:center; justify-content:center; white-space:pre;
+  }
+  .slot{
+    min-width:88px; min-height:88px; display:flex; align-items:center; justify-content:center;
+    font-size: clamp(28px, 5vw, 48px); border:2px dashed #3b475a; border-radius:16px; background:var(--slot);
+    padding:8px 12px; user-select:none; color:#e5e7eb;
+  }
+  .slot.active{ border-color:var(--accent); background:var(--slotActive) }
+  .rackWrap{ margin-top:10px }
+  .rackTitle{color:#cbd5e1; font-size:14px; margin:8px 0 4px}
+  .rack{display:flex; gap:8px; flex-wrap:wrap}
+  .chip{
+    padding:12px 16px; min-width:72px; font-size:36px; line-height:1; display:inline-flex; align-items:center; justify-content:center;
+    background:var(--tile); border:1px solid #2a3a73; border-radius:12px; color:#fff; cursor:grab; user-select:none;
+  }
+  .chip:hover{ background:var(--tileHover) }
+  .chip:active{ cursor:grabbing }
+
+  .centerControls{display:flex; gap:8px; justify-content:flex-end; margin-top:12px}
+  .feedback{margin-top:10px; padding:10px; border-radius:12px; border:1px solid var(--line); background:#0c162a}
+  .feedback.ok{border-color:#134e4a; background:#052e2b}
+  .feedback.bad{border-color:#4c1d1d; background:#2a0c0c}
+  .steps{margin-top:10px; border:1px solid var(--line); border-radius:12px}
+  .steps summary{cursor:pointer; padding:10px 12px; background:#0b182e; border-bottom:1px solid var(--line)}
+  .steps .content{padding:10px 12px; line-height:1.5}
+
+  /* WORKSHEET */
+  .wsHeader{font-size:clamp(18px,2.8vw,24px); text-align:center; margin:0 0 6px; color:#cbd5e1}
+  .wControls{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 8px}
+  .wgrid{display:grid; gap:10px; grid-template-columns: repeat(1, minmax(300px, 1fr))}
+  @media (min-width:700px){ .wgrid{ grid-template-columns: repeat(2, minmax(300px, 1fr)); } }
+  @media (min-width:1100px){ .wgrid{ grid-template-columns: repeat(3, minmax(300px, 1fr)); } }
+  .wcard{ position:relative; border:1px solid #334155; border-radius:12px; background:#0f1a30; padding:12px; display:flex; flex-direction:column; gap:8px }
+  .wlabel{ position:absolute; top:8px; left:10px; font-weight:700; font-size:14px; color:#cbd5e1; opacity:.9; background:rgba(255,255,255,.06); border:1px solid #334155; padding:2px 8px; border-radius:999px }
+  .wPair{ display:grid; grid-template-columns: 1fr auto 1fr; gap:10px; align-items:center }
+  .wNum{ font-family: ui-monospace, Menlo, Consolas, "Courier New", monospace; font-size: clamp(26px, 4.2vw, 36px); text-align:center; white-space:pre; line-height:1.15; padding:4px 6px; border:1px solid #2a3a73; border-radius:10px; background:#101c39 }
+  .wSign{ font-size: clamp(28px, 4.5vw, 44px); text-align:center; opacity:.7 }
+  .wbtns{display:flex; gap:8px; justify-content:flex-end}
+  .wans{display:none; border-top:1px dashed #334155; padding-top:8px; color:#e5e7eb}
+
+  footer{margin:18px 0 8px; text-align:center; color:#9ca3af}
+
+  /* Popup + High Contrast */
+  .popup{position:fixed; left:50%; transform:translateX(-50%); top:18px; background:#0c1b3a; color:#e5e7eb; padding:10px 14px; border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4); display:none; z-index:1000}
+  body.hc{--bg:#000;--card:#000;--text:#fff;--muted:#eee;--line:#888;--accent:#fff;--btn:#000;--tile:#111;--tileHover:#191919;--slot:#000;--slotActive:#111}
+</style>
+</head>
+<body>
+<div id="popup" class="popup" role="status" aria-live="polite"></div>
+
+<div class="wrap">
+  <header>
+    <h1>Comparing Numbers — Drag the Sign</h1>
+    <div class="controls" role="toolbar" aria-label="Controls">
+      <div class="control">
+        <label for="modeSel">Mode</label>
+        <select id="modeSel" aria-label="Mode select">
+          <option value="game" selected>Game</option>
+          <option value="worksheet">Worksheet</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="difficulty">Difficulty</label>
+        <select id="difficulty" aria-label="Select difficulty">
+          <option value="easy" selected>Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+          <option value="mixed">Mixed</option>
+        </select>
+      </div>
+      <div class="control">
+        <label><input type="checkbox" id="timerToggle" /> Timer</label>
+        <select id="timerLen" aria-label="Timer length" disabled>
+          <option value="30">30 s</option>
+          <option value="60" selected>60 s</option>
+          <option value="90">90 s</option>
+          <option value="120">120 s</option>
+        </select>
+        <span id="timeLeft" aria-live="polite" style="min-width:60px; text-align:right; display:inline-block;"></span>
+      </div>
+      <div class="control">
+        <label><input type="checkbox" id="soundToggle" checked /> Sound</label>
+      </div>
+      <div class="control">
+        <label><input type="checkbox" id="contrastToggle" /> High contrast</label>
+      </div>
+      <button class="btn ghost" id="resetBtn" title="Reset session (keeps settings)">Reset</button>
+    </div>
+  </header>
+
+  <div class="row">
+    <!-- MAIN -->
+    <section class="card">
+      <p class="help"><details><summary>Help</summary>
+        <div style="margin-top:6px;line-height:1.5">
+          <b>Game:</b> Drag or click a sign (<code>&gt;</code>, <code>&lt;</code>, <code>=</code>) into the middle, then <b>Submit</b>.<br/>
+          <b>Worksheet:</b> Generate 5/10/15 numbered cards. Click <i>Reveal</i> (or <i>Reveal all</i>) to show the sign and explanation.<br/>
+          Keyboard: <b>&gt;</b>/<b>&lt;</b>/<b>=</b> to choose, <b>Enter</b> submit, <b>Esc</b> clear.
+        </div>
+      </details></p>
+
+      <!-- GAME -->
+      <div id="gameView">
+        <div class="bigRow" aria-label="Comparison">
+          <div class="numBox" id="leftNum"></div>
+          <div class="slot" id="signSlot" aria-label="Drop the sign here" tabindex="0">?</div>
+          <div class="numBox" id="rightNum"></div>
+        </div>
+
+        <div class="rackWrap">
+          <div class="rackTitle">Signs</div>
+          <div id="signRack" class="rack" aria-label="Sign options"></div>
+        </div>
+
+        <div class="centerControls">
+          <button class="btn secondary" id="clearBtn">Clear</button>
+          <button class="btn primary" id="submitBtn">Submit</button>
+          <button class="btn" id="nextBtn" disabled>Next</button>
+        </div>
+
+        <div id="feedback" class="feedback" aria-live="polite" style="display:none"></div>
+
+        <details id="steps" class="steps" style="display:none">
+          <summary>Show Steps</summary>
+          <div class="content" id="stepsContent"></div>
+        </details>
+      </div>
+
+      <!-- WORKSHEET -->
+      <div id="wsView" style="display:none">
+        <div class="wsHeader">Insert <b>&gt;</b>, <b>&lt;</b>, or <b>=</b> to compare each pair.</div>
+        <div class="wControls">
+          <label for="wsCount">Set size:</label>
+          <select id="wsCount" aria-label="Worksheet set size">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15" selected>15</option>
+          </select>
+          <button class="btn primary" id="wsGen">Regenerate</button>
+          <button class="btn" id="wsRevealAll">Reveal all</button>
+          <button class="btn" id="wsHideAll">Hide all</button>
+        </div>
+        <div id="wsGrid" class="wgrid" aria-label="Worksheet problems grid"></div>
+      </div>
+    </section>
+
+    <!-- SUMMARY -->
+    <aside id="summaryCard" class="card">
+      <h3 style="margin:0 0 6px; font-size:15px; color:#cbd5e1;">Session Summary</h3>
+      <div id="summary">
+        <div>Total answered: <span id="sumTotal">0</span></div>
+        <div>Correct: <span id="sumCorrect">0</span></div>
+        <div>Accuracy: <span id="sumAcc">0%</span></div>
+        <div>Score: <span id="sumScore">0</span></div>
+        <div>Streak: <span id="sumStreak">0</span></div>
+      </div>
+      <details id="incorrectList" style="margin-top:8px">
+        <summary>Incorrect (0)</summary>
+        <div id="incItems" style="margin-top:6px; display:grid; gap:8px"></div>
+      </details>
+      <footer style="margin-top:12px">Created by Mr. McLean Math</footer>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = s=>document.querySelector(s);
+  const el = {
+    modeSel:$("#modeSel"), difficulty:$("#difficulty"),
+    timerToggle:$("#timerToggle"), timerLen:$("#timerLen"), timeLeft:$("#timeLeft"),
+    soundToggle:$("#soundToggle"), contrastToggle:$("#contrastToggle"), resetBtn:$("#resetBtn"),
+
+    // game
+    leftNum:$("#leftNum"), rightNum:$("#rightNum"),
+    signSlot:$("#signSlot"), signRack:$("#signRack"),
+    clearBtn:$("#clearBtn"), submitBtn:$("#submitBtn"), nextBtn:$("#nextBtn"),
+    feedback:$("#feedback"), steps:$("#steps"), stepsContent:$("#stepsContent"),
+
+    // worksheet
+    wsView:$("#wsView"), wsGrid:$("#wsGrid"), wsGen:$("#wsGen"), wsCount:$("#wsCount"),
+    wsRevealAll:$("#wsRevealAll"), wsHideAll:$("#wsHideAll"),
+
+    // views + summary
+    gameView:$("#gameView"), summaryCard:$("#summaryCard"),
+    sumTotal:$("#sumTotal"), sumCorrect:$("#sumCorrect"), sumAcc:$("#sumAcc"),
+    sumScore:$("#sumScore"), sumStreak:$("#sumStreak"),
+    incorrectList:$("#incorrectList"), incItems:$("#incItems"),
+
+    popup:$("#popup")
+  };
+
+  // ---- utils ----
+  const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  function formatSpaces(n){
+    const s=String(n); const neg=s[0]==='-'; const d=neg?s.slice(1):s;
+    if(d.length<=3) return (neg?'-':'')+d;
+    const r=[...d].reverse(); const out=[];
+    for(let i=0;i<r.length;i++){ if(i>0 && i%3===0) out.push(' '); out.push(r[i]); }
+    return (neg?'-':'')+out.reverse().join('');
+  }
+  function beep(ok){
+    if(!state.soundOn) return;
+    try{
+      const C=new (window.AudioContext||window.webkitAudioContext)(), o=C.createOscillator(), g=C.createGain();
+      o.type="sine"; o.frequency.value=ok?880:220; g.gain.value=0.12; o.connect(g); g.connect(C.destination);
+      o.start(); setTimeout(()=>{o.stop();C.close();},150);
+    }catch(_){}
+  }
+  function popup(msg){ el.popup.textContent=msg; el.popup.style.display="block"; setTimeout(()=>el.popup.style.display="none",900); }
+
+  // ---- difficulty + generator ----
+  const CFG = {
+    easy:   {min:-20,   max:20,   negPairBias:0.6, equalChance:0.1},
+    medium: {min:-200,  max:200,  negPairBias:0.6, equalChance:0.1},
+    hard:   {min:-2000, max:2000, negPairBias:0.7, equalChance:0.12},
+    mixed:  {min:-2000, max:2000, negPairBias:0.65, equalChance:0.11}
+  };
+
+  function genPair(){
+    const cfg = CFG[el.difficulty.value];
+    const range = (min,max)=> ri(min,max);
+    // equal occasionally
+    if(Math.random()<cfg.equalChance){
+      const v = range(cfg.min, cfg.max);
+      return [v,v];
+    }
+    const bothNeg = Math.random() < cfg.negPairBias;
+    let a,b;
+    if(bothNeg){
+      const nmin = Math.min(-1, cfg.min);
+      a = range(nmin, -1);
+      b = range(nmin, -1);
+      if(a===b){ b = a-1; }
+    }else{
+      a = range(cfg.min, cfg.max);
+      b = range(cfg.min, cfg.max);
+      if(a===b){ b += (b<cfg.max?1:-1); }
+      // sprinkle tricky same-abs pairs sometimes
+      if(Math.random()<0.25){
+        const m = Math.max(1, Math.min(20, Math.abs(a)));
+        a = -m; b = m;
+      }
+    }
+    return [a,b];
+  }
+
+  // ---- state ----
+  let state = {
+    L:0, R:0, correctSign:'?', chosenSign:null,
+    total:0, correct:0, score:0, streak:0, incorrect:[],
+    timerOn:false, timeRemaining:0, timerId:null, soundOn:true
+  };
+
+  // ---- game rendering ----
+  function newRound(){
+    hideFeedback();
+    setSign(null);
+    const [a,b] = genPair();
+    state.L=a; state.R=b;
+    el.leftNum.textContent = formatSpaces(a);
+    el.rightNum.textContent = formatSpaces(b);
+    el.nextBtn.disabled=true;
+  }
+
+  function correctSignFor(a,b){
+    if(a>b) return '>';
+    if(a<b) return '<';
+    return '=';
+  }
+
+  function setSign(sign){
+    state.chosenSign = sign;
+    el.signSlot.textContent = sign || '?';
+    if(sign) el.signSlot.style.borderStyle='solid'; else el.signSlot.style.borderStyle='dashed';
+  }
+
+  function buildRack(){
+    el.signRack.innerHTML='';
+    ['>','<','='].forEach(s=>{
+      const b=document.createElement('button');
+      b.className='chip'; b.draggable=true; b.textContent=s; b.dataset.val=s;
+      b.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',s));
+      b.addEventListener('click',()=>setSign(s));
+      el.signRack.appendChild(b);
+    });
+  }
+
+  // DnD
+  ['dragover','dragenter'].forEach(evt=>{
+    el.signSlot.addEventListener(evt,e=>{e.preventDefault(); el.signSlot.classList.add('active');});
+  });
+  ['dragleave','drop'].forEach(evt=>{
+    el.signSlot.addEventListener(evt,()=> el.signSlot.classList.remove('active'));
+  });
+  el.signSlot.addEventListener('drop',e=>{
+    e.preventDefault();
+    const s = e.dataTransfer.getData('text/plain');
+    if(s==='>'||s==='<'||s==='=') setSign(s);
+  });
+
+  // ---- feedback / summary ----
+  function showFeedback(ok,msg){ el.feedback.style.display='block'; el.feedback.className='feedback '+(ok?'ok':'bad'); el.feedback.textContent=msg; beep(ok); }
+  function hideFeedback(){ el.feedback.style.display='none'; el.feedback.className='feedback'; el.feedback.textContent=''; el.steps.style.display='none'; el.steps.open=false; }
+  function buildSteps(){
+    const a=state.L,b=state.R, sign=correctSignFor(a,b);
+    el.stepsContent.innerHTML = `
+      <div>Left: <b>${formatSpaces(a)}</b> &nbsp;&nbsp; Right: <b>${formatSpaces(b)}</b></div>
+      <div>Since ${formatSpaces(a)} ${sign} ${formatSpaces(b)}, the correct sign is <b>${sign}</b>.</div>
+      ${a<0||b<0? `<div><i>Tip:</i> On the number line, more to the right means greater. Any negative is less than any positive. Between negatives, the one with the smaller absolute value is greater (e.g., -3 &gt; -8).</div>`:''}
+    `;
+    el.steps.style.display='block';
+  }
+
+  function updateSummary(){
+    el.sumTotal.textContent = state.total;
+    el.sumCorrect.textContent = state.correct;
+    el.sumStreak.textContent = state.streak;
+    el.sumScore.textContent  = state.score;
+    el.sumAcc.textContent = state.total? Math.round(100*state.correct/state.total)+'%':'0%';
+
+    el.incorrectList.querySelector('summary').textContent = `Incorrect (${state.incorrect.length})`;
+    el.incItems.innerHTML='';
+    state.incorrect.slice(-10).forEach((it,i)=>{
+      const d=document.createElement('div'); d.style.cssText='border:1px solid #334155;border-radius:10px;padding:8px';
+      d.innerHTML=`<div><b>Round ${it.round}</b></div>
+        <div>${formatSpaces(it.L)} ? ${formatSpaces(it.R)}</div>
+        <div>Your: <b>${it.your||'(none)'}</b> &nbsp; Correct: <b>${it.correct}</b></div>`;
+      el.incItems.appendChild(d);
+    });
+  }
+
+  function submitRound(){
+    if(!state.chosenSign){ showFeedback(false,'Pick a sign first.'); return; }
+    const correct = correctSignFor(state.L,state.R);
+    const ok = state.chosenSign === correct;
+    state.total += 1;
+    if(ok){
+      state.correct += 1; state.streak += 1; state.score += 10;
+      if(state.streak%5===0){ state.score+=5; popup('Streak bonus +5!'); }
+      showFeedback(true,'Correct! +10');
+    }else{
+      state.streak = 0;
+      showFeedback(false,'Not quite. See steps below.');
+      state.incorrect.push({round: state.total, L:state.L, R:state.R, your:state.chosenSign, correct});
+    }
+    updateSummary();
+    buildSteps();
+    el.nextBtn.disabled=false;
+    stopTimer();
+  }
+
+  // ---- timer ----
+  function tick(){
+    if(state.timeRemaining<=0){ stopTimer(); el.timeLeft.textContent='0 s'; el.submitBtn.disabled=true; el.nextBtn.disabled=false; popup('Time up!'); return; }
+    state.timeRemaining -= 1; el.timeLeft.textContent = state.timeRemaining+' s';
+  }
+  function stopTimer(){ if(state.timerId){ clearInterval(state.timerId); state.timerId=null; } }
+
+  // ---- worksheet ----
+  function wsCard(pair, idx){
+    const [a,b]=pair; const sign = correctSignFor(a,b);
+    const wrap=document.createElement('div'); wrap.className='wcard';
+    wrap.innerHTML = `
+      <div class="wlabel">${idx+1}</div>
+      <div class="wPair">
+        <div class="wNum">${formatSpaces(a)}</div>
+        <div class="wSign">?</div>
+        <div class="wNum">${formatSpaces(b)}</div>
+      </div>
+      <div class="wbtns"><button class="btn secondary wReveal">Reveal</button></div>
+      <div class="wans">Answer: <b>${formatSpaces(a)} ${sign} ${formatSpaces(b)}</b><br/>
+        <i>${explain(a,b,sign)}</i>
+      </div>
+    `;
+    const btn=wrap.querySelector('.wReveal'), ans=wrap.querySelector('.wans');
+    btn.addEventListener('click',()=>{const show=ans.style.display!=='block'; ans.style.display=show?'block':'none'; btn.textContent=show?'Hide':'Reveal';});
+    return wrap;
+  }
+
+  function explain(a,b,sign){
+    if(a===b) return 'The numbers are equal.';
+    if(a>=0 && b>=0) return `Both positive: compare normally; ${formatSpaces(a)} ${sign} ${formatSpaces(b)}.`;
+    if(a<0 && b<0) return `Both negative: the one closer to zero is greater; ${formatSpaces(a)} ${sign} ${formatSpaces(b)}.`;
+    if(a<0 && b>=0) return `Negative vs positive: any negative is less than any positive.`;
+    if(a>=0 && b<0) return `Positive vs negative: any positive is greater than any negative.`;
+    return '';
+  }
+
+  function genWorksheet(){
+    el.wsGrid.innerHTML='';
+    const count=parseInt(el.wsCount.value,10);
+    for(let i=0;i<count;i++){
+      const p = genPair();
+      el.wsGrid.appendChild(wsCard(p,i));
+    }
+  }
+
+  // ---- events ----
+  el.submitBtn.addEventListener('click',submitRound);
+  el.nextBtn.addEventListener('click',()=>{ el.submitBtn.disabled=false; newRound(); if(el.timerToggle.checked){ state.timerOn=true; state.timeRemaining=parseInt(el.timerLen.value,10); el.timeLeft.textContent=state.timeRemaining+' s'; state.timerId=setInterval(tick,1000);} });
+  el.clearBtn.addEventListener('click',()=> setSign(null));
+
+  el.difficulty.addEventListener('change',()=> el.modeSel.value==='game' ? newRound() : genWorksheet());
+  el.modeSel.addEventListener('change',()=>{
+    if(el.modeSel.value==='game'){
+      el.gameView.style.display='block'; el.wsView.style.display='none'; el.summaryCard.style.display='block'; newRound();
+    }else{
+      el.gameView.style.display='none'; el.wsView.style.display='block'; el.summaryCard.style.display='none'; genWorksheet();
+    }
+  });
+
+  el.wsGen.addEventListener('click',genWorksheet);
+  el.wsCount.addEventListener('change',genWorksheet);
+  el.wsRevealAll.addEventListener('click',()=>{ el.wsGrid.querySelectorAll('.wans').forEach(n=>n.style.display='block'); el.wsGrid.querySelectorAll('.wReveal').forEach(b=>b.textContent='Hide'); });
+  el.wsHideAll.addEventListener('click',()=>{ el.wsGrid.querySelectorAll('.wans').forEach(n=>n.style.display='none'); el.wsGrid.querySelectorAll('.wReveal').forEach(b=>b.textContent='Reveal'); });
+
+  el.timerToggle.addEventListener('change',()=>{
+    const on=el.timerToggle.checked; el.timerLen.disabled=!on;
+    if(!on){ stopTimer(); state.timerOn=false; state.timeRemaining=0; el.timeLeft.textContent=''; }
+    else { state.timerOn=true; state.timeRemaining=parseInt(el.timerLen.value,10); el.timeLeft.textContent=state.timeRemaining+' s'; if(!state.timerId) state.timerId=setInterval(tick,1000); }
+  });
+  el.timerLen.addEventListener('change',()=>{ if(el.timerToggle.checked){ state.timeRemaining=parseInt(el.timerLen.value,10); el.timeLeft.textContent=state.timeRemaining+' s'; }});
+  el.soundToggle.addEventListener('change',()=> state.soundOn = el.soundToggle.checked);
+  el.contrastToggle.addEventListener('change',()=> document.body.classList.toggle('hc', el.contrastToggle.checked));
+  el.resetBtn.addEventListener('click',()=>{
+    stopTimer();
+    state={...state, total:0, correct:0, score:0, streak:0, incorrect:[], chosenSign:null, timerOn:false, timeRemaining:0};
+    el.timeLeft.textContent=''; el.submitBtn.disabled=false; el.nextBtn.disabled=true; updateSummary();
+    el.modeSel.value==='game' ? newRound() : genWorksheet();
+  });
+
+  // keyboard shortcuts (game)
+  document.addEventListener('keydown',e=>{
+    if(el.modeSel.value!=='game') return;
+    if(e.key==='>'||e.key==='<'||e.key==='=') setSign(e.key);
+    else if(e.key==='Enter') submitRound();
+    else if(e.key==='Escape') setSign(null);
+  });
+
+  // init
+  function init(){
+    buildRack();
+    document.body.classList.toggle('hc', el.contrastToggle.checked);
+    el.timerLen.disabled=!el.timerToggle.checked;
+    updateSummary();
+    newRound();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
